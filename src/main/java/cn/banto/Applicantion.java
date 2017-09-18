@@ -156,7 +156,7 @@ public class Applicantion extends SupplicantListener {
         }
     }
 
-    public void onLogin(boolean isSuccess, String msg) {
+    public void onConnect(boolean isSuccess, String msg) {
         System.out.println((isSuccess ? "认证成功" : "认证失败") + "，系统消息：" + msg);
     }
 

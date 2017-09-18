@@ -3,12 +3,13 @@ package cn.banto.event;
 import cn.banto.core.DisconnectType;
 
 public class SupplicantListener {
+
     /**
-     * 登录回调
+     * 认证回调
      * @param isSuccess
      * @param msg
      */
-    public void onLogin(boolean isSuccess, String msg){}
+    public void onConnect(boolean isSuccess, String msg){}
 
     /**
      * 离线回调
