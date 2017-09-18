@@ -210,7 +210,7 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
             }
             //登录回调
             logger.debug("正在回调登录结果");
-            listener.onLogin(isSuccess, message);
+            listener.onConnect(isSuccess, message);
         } catch (IOException e) {
             throw new SupplicantException("与认证服务器通讯出错", e);
         }
