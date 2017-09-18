@@ -62,22 +62,26 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
     private Messenger messenger;
 
     /**
-     * 断开消息监听器
+     * 离线消息监听器
      */
     private DisconnectListener disconnectListener;
 
     /**
-     * 各种事件回调
+     * 事件回调
      */
     private SupplicantListener listener;
 
     /**
-     * 初始化
+     * 构造方法
      */
     public Supplicant() throws SupplicantException {
         messenger = new Messenger();
     }
 
+    /**
+     * 设置监听回调
+     * @param listener
+     */
     public void setListener(SupplicantListener listener) {
         this.listener = listener;
     }

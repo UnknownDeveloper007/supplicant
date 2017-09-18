@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,7 +14,7 @@ import java.util.Map;
 public class MessageParser {
 
     /**
-     * 将通讯包转为字节数组
+     * 将消息对象转为字节数组
      * @param message
      * @return
      */
@@ -48,10 +49,12 @@ public class MessageParser {
     }
 
 
+    /**
+     * 将字节数组转为消息对象
+     * @param data
+     * @return
+     */
     public static Message fromByte(byte[] data){
-//        for (int i = 0; i < data.length; i++) {
-//            System.out.print(data[i] +",");
-//        }
         //检查数据完好性
 //        System.out.println("包长："+ data[1] +"," +(data[1] & 0xff));
 //        System.out.println("实际长度："+ data.length);
@@ -64,7 +67,6 @@ public class MessageParser {
         packet.setAction(data[0]);
 
         int index = 18;
-        boolean flag = false;
         while (true){
             int key = data[index];
             //修正长度无法正确获取的问题
@@ -79,15 +81,19 @@ public class MessageParser {
             System.arraycopy(data, ++index, value, 0, value.length);
             index += dataLen;
             //写入数据
-            if(packet.getData(key) == null && flag == false){
+            if(packet.getData(key) == null){
                 packet.putData(key, value);
             } else {
-                ArrayList<byte[]> list = new ArrayList<byte[]>();
-                if(packet.getData(key) != null && flag == false) {
+                ArrayList<byte[]> list;
+                if(packet.getDatas(key) == null) {
+                    list = new ArrayList<byte[]>();
                     list.add(packet.getData(key));
+                    list.add(value);
                     packet.removeData(key);
+                } else {
+                    list = packet.getDatas(key);
+                    list.add(value);
                 }
-                list.add(value);
                 packet.putDatas(key, list);
             }
             //检查数据是否已经解析完成
@@ -95,6 +101,7 @@ public class MessageParser {
                 break;
             }
         }
+
         return packet;
     }
 

@@ -8,7 +8,6 @@ public enum DisconnectType {
     NORMAL(-1, "正常下线"),
     DROPPED(0, "心跳掉线"),
     FORCE_DISCONNECT(1, "强制下线"),
-    //TIMEOUT(2, "时长已用完")
     NO_TIME_AVAILABLE(2, "时长已用完");
 
     private int code;
