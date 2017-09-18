@@ -94,8 +94,7 @@ public class DisconnectListener extends BaseSocket {
                     byte[] response = new byte[packet.getLength()];
                     System.arraycopy(buffer, 0, response, 0, response.length);
                     //解析数据
-                    byte[] data = CryptTo3848.decode(response);
-                    Message message = MessageParser.fromByte(data);
+                    Message message = byteToMessage(response);
                     //检查包是否合法
                     if(message.getAction() == Actions.DISCONNECT) {
                         int reason = message.getData(Keys.REASON)[0];
