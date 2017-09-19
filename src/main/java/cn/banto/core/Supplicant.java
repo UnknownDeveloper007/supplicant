@@ -35,12 +35,6 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
             0x6e, 0x65, 0x85, 0x72, 0x67
     };
 
-
-    /**
-     * 通讯网卡信息
-     */
-    private NetWorkInfo netWorkInfo;
-
     /**
      * 会话标识
      */
@@ -50,6 +44,16 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
      * 心跳计数器
      */
     private int index = 0x01000000;
+
+    /**
+     * 启用DHCP
+     */
+    private boolean dhcp = false;
+
+    /**
+     * 蝴蝶版本号
+     */
+    private String version = "3.8.2";
 
     /**
      * 心跳定时器
@@ -72,10 +76,27 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
     private SupplicantListener listener;
 
     /**
+     * 通讯网卡信息
+     */
+    private NetWorkInfo netWorkInfo;
+
+    /**
      * 构造方法
      */
-    public Supplicant() throws SupplicantException {
+    public Supplicant(NetWorkInfo netWorkInfo) throws SupplicantException {
+        if(netWorkInfo == null){
+            throw new SupplicantException("请设置正确的网卡信息");
+        }
+        this.netWorkInfo = netWorkInfo;
+        //初始化信使
         messenger = new Messenger();
+        //自动搜搜认证服务器
+        try {
+            InetAddress server = InetAddress.getByName(search());
+            messenger.setServer(server);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -103,11 +124,19 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
     }
 
     /**
-     * 设置通讯网卡
-     * @param netWorkInfo
+     * 设置蝴蝶版本号
+     * @param version
      */
-    public void setNetWorkInfo(NetWorkInfo netWorkInfo) {
-        this.netWorkInfo = netWorkInfo;
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    /**
+     * 设置是否启用dhcp
+     * @param dhcp
+     */
+    public void setDhcp(boolean dhcp) {
+        this.dhcp = dhcp;
     }
 
     /**
@@ -172,10 +201,8 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
      * @param username 用户名
      * @param password 密码
      * @param entry    认证方式
-     * @param dhcp     自动分配IP
-     * @param version  红蝴蝶版本号
      */
-    public void connect(String username, String password, String entry, boolean dhcp, String version) throws SupplicantException{
+    public void connect(String username, String password, String entry) throws SupplicantException{
         Message packet = new Message();
         packet.setAction(Actions.LOGIN);
         packet.putData(Keys.MAC, getMAC());

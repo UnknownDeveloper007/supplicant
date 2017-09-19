@@ -7,7 +7,6 @@ public class Config {
     private String natIp;
     private String natMac;
 
-    private String server;
     private String entry;
     private boolean dhcp = false;
     private String username;
@@ -37,14 +36,6 @@ public class Config {
 
     public void setNatMac(String natMac) {
         this.natMac = natMac;
-    }
-
-    public String getServer() {
-        return server;
-    }
-
-    public void setServer(String server) {
-        this.server = server;
     }
 
     public String getEntry() {

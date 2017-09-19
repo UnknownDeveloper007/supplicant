@@ -26,11 +26,10 @@ public class Applicantion extends SupplicantListener {
      * @throws Exception
      */
     public void run() throws Exception {
-        final Supplicant supplicant = new Supplicant();
         //读取配置
         File file = new File("./config.json");
         if (!file.exists()) {
-            this.buildConfig(supplicant, file);
+            buildConfig(file);
         }
 
         Config config =  JSON.parseObject(new FileInputStream(file), Config.class);
@@ -51,10 +50,11 @@ public class Applicantion extends SupplicantListener {
         }
 
         //启动supplicant
+        final Supplicant supplicant = new Supplicant(netWorkInfo);
         supplicant.setTimeout(5000);
         supplicant.setListener(this);
-        supplicant.setNetWorkInfo(netWorkInfo);
-        supplicant.setServer(InetAddress.getByName(config.getServer()));
+        supplicant.setDhcp(config.isDhcp());
+        supplicant.setVersion(config.getVersion());
         //添加ctrl + c的监听
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
@@ -69,19 +69,20 @@ public class Applicantion extends SupplicantListener {
         });
 
         //开始认证
-        supplicant.connect(config.getUsername(), config.getPassword(), config.getEntry(), config.isDhcp(), config.getVersion());
+        supplicant.connect(config.getUsername(), config.getPassword(), config.getEntry());
     }
 
     /**
      * 创建配置文件
-     * @param supplicant
      * @param file
      * @throws
      */
-    public void buildConfig(Supplicant supplicant, File file) throws SupplicantException, UnknownHostException {
+    public void buildConfig(File file) throws SupplicantException {
         Config config = new Config();
         Scanner scanner = new Scanner(System.in);
+
         //设置网卡信息
+        NetWorkInfo netWorkInfo = null;
         System.out.print("是否启动NAT穿透(y/n)?");
         if (scanner.nextLine().trim().equalsIgnoreCase("y")) {
 
@@ -90,11 +91,8 @@ public class Applicantion extends SupplicantListener {
             System.out.print("请输入路由器MAC:");
             config.setNatMac(scanner.nextLine().trim());
 
-            NetWorkInfo info = new NetWorkInfo();
-            info.setIp(config.getNatIp());
-            info.setMac(config.getNatMac());
-            supplicant.setNetWorkInfo(info);
-
+            netWorkInfo.setIp(config.getNatIp());
+            netWorkInfo.setMac(config.getNatMac());
         } else {
 
             System.out.println("请选择网卡:");
@@ -105,24 +103,13 @@ public class Applicantion extends SupplicantListener {
             }
 
             System.out.print("请输入序号:");
-            NetWorkInfo info = list.get(scanner.nextInt() - 1);
-            config.setNetwork(info.getName());
+            netWorkInfo = list.get(scanner.nextInt() - 1);
+            config.setNetwork(netWorkInfo.getName());
             //解决直接跳过的bug
             scanner.nextLine();
-
-            supplicant.setNetWorkInfo(info);
         }
 
-        //认证服务器
-        System.out.print("请输入认证服务器IP(留空则自动搜索): ");
-        String server = scanner.nextLine().trim();
-        if (server.length() == 0) {
-            server = supplicant.search();
-            System.out.println();
-            System.out.println("已搜索到服务器:" + server);
-        }
-        config.setServer(server);
-        supplicant.setServer(InetAddress.getByName(config.getServer()));
+        Supplicant supplicant = new Supplicant(netWorkInfo);
 
         //认证方式
         List<String> entries = supplicant.getEntries();
