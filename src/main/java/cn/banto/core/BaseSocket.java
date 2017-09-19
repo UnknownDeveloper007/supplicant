@@ -1,7 +1,7 @@
 package cn.banto.core;
 
+import cn.banto.exception.SocketClosedException;
 import cn.banto.utils.CryptTo3848;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -17,7 +17,6 @@ public class BaseSocket {
     protected InetAddress server;
     protected DatagramSocket socket;
 
-    protected byte[] buffer = new byte[1024];
 
     /**
      * 设置通讯服务器地址
@@ -36,44 +35,85 @@ public class BaseSocket {
     }
 
     /**
+     * 关闭socket
+     */
+    public void stop(){
+        try {
+            DatagramPacket packet = new DatagramPacket(new byte[1], 1, InetAddress.getByName("127.0.0.1"), socket.getPort());
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * 初始化socket
      * @throws SocketException
      */
-    protected void initSocket() throws SocketException{}
+    protected void initSocket(int port) throws SocketException{
+        socket = new DatagramSocket(port);
+    }
 
     /**
-     * 将消息对象转为字节数据
+     * 发送消息对象
      * @param message
-     * @return
+     * @param address
+     * @param port
+     * @throws IOException
      */
-    protected byte[] messageToByte(Message message){
+    protected void send(Message message, InetAddress address, int port) throws IOException {
+        //编码消息
         byte[] buffer = MessageParser.toByte(message);
         byte[] data   = CryptTo3848.encode(buffer);
-        logger.debug("已成功将消息对象["+ message.hashCode() +"]转为字节数组: "+ StringUtils.join(data, ','));
-
-        return data;
+        //发送消息
+        DatagramPacket packet = new DatagramPacket(data, data.length, address, port);
+        socket.send(packet);
     }
 
     /**
-     * 将字节数组转为消息对象
-     * @param data
+     * 接收消息
      * @return
+     * @throws IOException
      */
-    protected Message byteToMessage(byte[] data){
-        byte[] buffer = CryptTo3848.decode(data);
-        Message message = MessageParser.fromByte(buffer);
-        logger.debug("已成功将字节数组转为消息对象["+ message.hashCode() +"]: "+ StringUtils.join(data, ','));
-
-        return message;
+    protected Message read() throws IOException {
+        return read(new MessageFilter());
     }
 
-    protected byte[] readData() throws IOException {
+    /**
+     * 接收消息
+     * @param filter
+     * @return
+     * @throws IOException
+     */
+    protected Message read(MessageFilter filter) throws IOException {
+        byte[] buffer = new byte[1024];
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
         socket.receive(packet);
+        //关闭socket
+        if(isStopSocketPacket(packet) && ! socket.isClosed()){
+            socket.close();
+            throw new SocketClosedException();
+        }
+        //如果不是来自服务器的消息,则丢弃重新接收，直到接收到或超时为止
+        if(! isFromServer(packet)){
+            return read(filter);
+        }
+        //运行前置过滤器
+        if(! filter.befor(packet)){
+            return read(filter);
+        }
+        //解析数据
         byte[] response = new byte[packet.getLength()];
         System.arraycopy(buffer, 0, response, 0, response.length);
+        //解码
+        byte[] decode = CryptTo3848.decode(response);
+        Message message = MessageParser.fromByte(decode);
+        //运行后置过滤器
+        if(! filter.after(message)){
+            return read(filter);
+        }
 
-        return response;
+        return message;
     }
 
     /**
@@ -92,11 +132,11 @@ public class BaseSocket {
     }
 
     /**
-     * 判断是否来自本地的消息
+     * 判断是否为停止socket的包
      * @param packet
      * @return
      */
-    protected boolean isFromLocal(DatagramPacket packet){
-        return "127.0.0.1".equals(packet.getAddress().getHostAddress());
+    protected boolean isStopSocketPacket(DatagramPacket packet){
+        return "127.0.0.1".equals(packet.getAddress().getHostAddress()) && packet.getLength() == 1;
     }
 }
