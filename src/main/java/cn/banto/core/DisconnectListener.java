@@ -10,6 +10,9 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 
+/**
+ * 离线消息监听器
+ */
 public class DisconnectListener extends BaseSocket {
 
     private final Logger logger = Logger.getLogger(DisconnectListener.class);
