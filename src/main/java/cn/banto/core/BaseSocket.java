@@ -4,6 +4,7 @@ import cn.banto.utils.CryptTo3848;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -15,6 +16,8 @@ public class BaseSocket {
 
     protected InetAddress server;
     protected DatagramSocket socket;
+
+    protected byte[] buffer = new byte[1024];
 
     /**
      * 设置通讯服务器地址
@@ -62,6 +65,15 @@ public class BaseSocket {
         logger.debug("已成功将字节数组转为消息对象["+ message.hashCode() +"]: "+ StringUtils.join(data, ','));
 
         return message;
+    }
+
+    protected byte[] readData() throws IOException {
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        socket.receive(packet);
+        byte[] response = new byte[packet.getLength()];
+        System.arraycopy(buffer, 0, response, 0, response.length);
+
+        return response;
     }
 
     /**
