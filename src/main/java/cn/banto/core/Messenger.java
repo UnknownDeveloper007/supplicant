@@ -4,8 +4,6 @@ import cn.banto.exception.SupplicantException;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 
@@ -14,48 +12,29 @@ public class Messenger extends  BaseSocket{
     private final Logger logger = Logger.getLogger(Messenger.class);
 
     /**
-     * 数据缓存
+     * 构造方法
+     * @throws SupplicantException
      */
-    private byte[] buffer = new byte[1024];
-
-    /**
-     * 接收超时时间
-     */
-    private int receiveTimeout = 5000;
-
-
     public Messenger() throws SupplicantException {
         try {
-            initSocket();
+            initSocket(3848);
         } catch (SocketException e) {
             throw new SupplicantException("监听3848端口失败,请检查端口是否被占用", e);
         }
         logger.debug("消息信使已初始化完成");
     }
 
-
     /**
-     * 设置消息接收超时时间
+     * 设置超时时间
      * @param receiveTimeout
      */
     public void setReceiveTimeout(int receiveTimeout) {
-        this.receiveTimeout = receiveTimeout;
+        try {
+            socket.setSoTimeout(receiveTimeout);
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
         logger.debug("接收消息超时 = "+ receiveTimeout);
-    }
-
-    /**
-     * 发送消息
-     * @param message 消息
-     * @param address 目标地址
-     * @param port    目标端口
-     * @throws IOException
-     */
-    public void send(Message message, InetAddress address, int port) throws IOException {
-        byte[] data = messageToByte(message);
-        DatagramPacket packet = new DatagramPacket(data, data.length, address, port);
-
-        socket.send(packet);
-        logger.debug("已发出消息:"+ message.hashCode());
     }
 
     /**
@@ -73,28 +52,13 @@ public class Messenger extends  BaseSocket{
      * @return
      * @throws IOException
      */
-    public Message receive(int appointAction) throws IOException {
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-        socket.setSoTimeout(receiveTimeout);
-        socket.receive(packet);
-        int hashCode = packet.hashCode();
-        logger.debug("接收到消息:"+ hashCode);
-        //检查是否是来自服务器的消息,如果不是服务器的消息，则重新接收，直到接收到服务器消息为止
-        if(! isFromServer(packet)){
-            logger.debug(hashCode +"不属于来自服务器的消息,已被丢弃");
-            return receive(appointAction);
-        }
-        //提取数据
-        byte[] response = new byte[packet.getLength()];
-        System.arraycopy(buffer, 0, response, 0, response.length);
-        Message message = byteToMessage(response);
-        //检查是否是指定的消息
-        if(message.getAction() != appointAction){
-            logger.debug(hashCode +"不属于指定消息,已被丢弃");
-            return receive(appointAction);
-        }
-
-        return message;
+    public Message receive(final int appointAction) throws IOException {
+        return read(new MessageFilter() {
+            @Override
+            public boolean after(Message message) {
+                return message.getAction() == appointAction;
+            }
+        });
     }
 
     /**
@@ -130,10 +94,5 @@ public class Messenger extends  BaseSocket{
         socket.close();
         socket = null;
         logger.debug("已释放消息信使");
-    }
-
-    protected void initSocket() throws SocketException {
-        socket = new DatagramSocket(3848);
-        socket.setSoTimeout(receiveTimeout);
     }
 }

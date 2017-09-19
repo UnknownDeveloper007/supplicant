@@ -233,7 +233,6 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
                 disconnectListener = new DisconnectListener();
                 disconnectListener.setServer(messenger.getServer());
                 disconnectListener.setOnDisconnect(this);
-                disconnectListener.run();
             }
             //登录回调
             logger.debug("正在回调登录结果");

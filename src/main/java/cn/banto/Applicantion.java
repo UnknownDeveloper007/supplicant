@@ -10,8 +10,6 @@ import cn.banto.utils.NetWorkUtils;
 import com.alibaba.fastjson.JSON;
 
 import java.io.*;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
