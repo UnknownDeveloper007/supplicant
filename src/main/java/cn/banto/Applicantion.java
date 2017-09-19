@@ -12,6 +12,7 @@ import com.alibaba.fastjson.JSON;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -109,10 +110,18 @@ public class Applicantion extends SupplicantListener {
             scanner.nextLine();
         }
 
-        Supplicant supplicant = new Supplicant(netWorkInfo);
 
         //认证方式
-        List<String> entries = supplicant.getEntries();
+        Supplicant supplicant = null;
+        List<String> entries = new ArrayList<String>();
+        try {
+            supplicant = new Supplicant(netWorkInfo);
+            entries.addAll(supplicant.getEntries());
+        } finally {
+            if(supplicant != null){
+                supplicant.destroy();
+            }
+        }
         System.out.println("请选择认证方式:");
         for(int i = 0; i < entries.size(); ++i) {
             System.out.println(i + 1 + " : " + entries.get(i));
