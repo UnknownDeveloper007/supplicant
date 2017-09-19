@@ -271,6 +271,8 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
                 session = response.getData(Keys.SESSION);
                 index += 3;
             }
+            //心跳回调
+            listener.onBreathe(isSuccess);
         } catch (IOException e) {
             throw new SupplicantException("与认证服务器通讯出错", e);
         }

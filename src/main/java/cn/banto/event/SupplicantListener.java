@@ -12,8 +12,20 @@ public class SupplicantListener {
     public void onConnect(boolean isSuccess, String msg){}
 
     /**
+     * 心跳回调
+     * @param isSuccess
+     */
+    public void onBreathe(boolean isSuccess){}
+
+    /**
      * 离线回调
      * @param type
      */
     public void onDisconnect(DisconnectType type){}
+
+    /**
+     * 发生异常回调
+     * @param e
+     */
+    public void onException(Exception e){}
 }
