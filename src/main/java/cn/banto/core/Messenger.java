@@ -21,7 +21,7 @@ public class Messenger extends  BaseSocket{
     /**
      * 接收超时时间
      */
-    private int receiveTimeout;
+    private int receiveTimeout = 5000;
 
 
     public Messenger() throws SupplicantException {
@@ -34,6 +34,10 @@ public class Messenger extends  BaseSocket{
     }
 
 
+    /**
+     * 设置消息接收超时时间
+     * @param receiveTimeout
+     */
     public void setReceiveTimeout(int receiveTimeout) {
         this.receiveTimeout = receiveTimeout;
         logger.debug("接收消息超时 = "+ receiveTimeout);
@@ -41,7 +45,9 @@ public class Messenger extends  BaseSocket{
 
     /**
      * 发送消息
-     * @param message
+     * @param message 消息
+     * @param address 目标地址
+     * @param port    目标端口
      * @throws IOException
      */
     public void send(Message message, InetAddress address, int port) throws IOException {
@@ -54,7 +60,7 @@ public class Messenger extends  BaseSocket{
 
     /**
      * 发送消息
-     * @param message
+     * @param message 消息
      * @throws IOException
      */
     public void send(Message message) throws IOException {
@@ -63,7 +69,7 @@ public class Messenger extends  BaseSocket{
 
     /**
      * 接收消息
-     * @param appointAction
+     * @param appointAction 指定消息动作
      * @return
      * @throws IOException
      */
@@ -93,8 +99,8 @@ public class Messenger extends  BaseSocket{
 
     /**
      * 发送并接受消息
-     * @param message
-     * @param appointAction
+     * @param message 发送的消息
+     * @param appointAction 指定消息动作
      * @return
      * @throws IOException
      */
