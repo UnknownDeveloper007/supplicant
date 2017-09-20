@@ -22,10 +22,4 @@ public class SupplicantListener {
      * @param type
      */
     public void onDisconnect(DisconnectType type){}
-
-    /**
-     * 发生异常回调
-     * @param e
-     */
-    public void onException(Exception e){}
 }

@@ -59,7 +59,10 @@ public class Applicantion extends SupplicantListener {
             public void run() {
                 try {
                     supplicant.disconnect();
+                    Thread.sleep(200);
                 } catch (SupplicantException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 } finally {
                     supplicant.destroy();
@@ -156,5 +159,10 @@ public class Applicantion extends SupplicantListener {
 
     public void onDisconnect(DisconnectType type) {
         System.out.print("你已与认证服务器断开, 断开原因: "+ type.getRemark());
+    }
+
+    @Override
+    public void onBreathe(boolean isSuccess) {
+        System.out.println("心跳回执:"+ isSuccess);
     }
 }

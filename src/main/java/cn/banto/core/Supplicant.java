@@ -4,8 +4,6 @@ import cn.banto.event.SupplicantListener;
 import cn.banto.exception.SupplicantException;
 import cn.banto.model.NetWorkInfo;
 import cn.banto.utils.ByteConvert;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -19,8 +17,6 @@ import java.util.TimerTask;
  * Created by banto on 2017/5/17.
  */
 public class Supplicant implements DisconnectListener.OnDisconnect {
-
-    private final Logger logger = Logger.getLogger(Supplicant.class);
 
     private final static int[] DEFAULT_BLOCK = new int[]{
             0x00, 0x00, 0x00, 0x00
@@ -150,9 +146,9 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
         message.putData(Keys.IP, netWorkInfo.getIp());
         message.putData(Keys.MAC, getMAC());
         try {
-            logger.debug("正在搜索认证服务器");
             InetAddress address = InetAddress.getByName("1.1.1.8");
-            Message response = messenger.sendAndReceive(message, address, 3850, Actions.SERVER_RET);
+            messenger.send(message, address, 3850);
+            Message response = messenger.read(Actions.SERVER_RET);
             //组装服务器IP
             byte[] ip = response.getData(Keys.SERVER);
             StringBuffer server = new StringBuffer();
@@ -160,7 +156,6 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
                 server.append(ip[i] & 0xFF).append(".");
             }
             server.deleteCharAt(server.lastIndexOf("."));
-            logger.debug("成功搜索到认证服务器: "+ server.toString());
 
             return server.toString();
         } catch (UnknownHostException e) {
@@ -180,14 +175,13 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
         message.putData(Keys.SESSION, ByteConvert.intArrayToBytes(DEFAULT_SESSION));
         message.putData(Keys.MAC, getMAC());
         try {
-            logger.debug("正在搜索可用认证方式");
-            Message response  = messenger.sendAndReceive(message, Actions.ENTRIES_RET);
+            messenger.send(message);
+            Message response  = messenger.read(Actions.ENTRIES_RET);
             //组装可用认证方式
             List<String> entries = new ArrayList<String>();
             for (byte[] buffer : response.getDatas(Keys.ENTRY)) {
                 entries.add(new String(buffer));
             }
-            logger.debug("成功搜索到可用认证方式: "+ StringUtils.join(entries, ","));
 
             return entries;
         } catch (IOException e) {
@@ -203,24 +197,23 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
      * @param entry    认证方式
      */
     public void connect(String username, String password, String entry) throws SupplicantException{
-        Message packet = new Message();
-        packet.setAction(Actions.LOGIN);
-        packet.putData(Keys.MAC, getMAC());
-        packet.putData(Keys.USERNAME, username);
-        packet.putData(Keys.PASSWORD, password);
-        packet.putData(Keys.IP, netWorkInfo.getIp());
-        packet.putData(Keys.ENTRY, entry);
-        packet.putData(Keys.DHCP, (dhcp ? new byte[]{0x01} : new byte[]{0x00}));
-        packet.putData(Keys.VERSION, version);
+        Message message = new Message();
+        message.setAction(Actions.LOGIN);
+        message.putData(Keys.MAC, getMAC());
+        message.putData(Keys.USERNAME, username);
+        message.putData(Keys.PASSWORD, password);
+        message.putData(Keys.IP, netWorkInfo.getIp());
+        message.putData(Keys.ENTRY, entry);
+        message.putData(Keys.DHCP, (dhcp ? new byte[]{0x01} : new byte[]{0x00}));
+        message.putData(Keys.VERSION, version);
         try {
-            logger.debug("正在发送上线请求");
-            Message response = messenger.sendAndReceive(packet, Actions.LOGIN_RET);
+            messenger.send(message);
+            Message response = messenger.read(Actions.LOGIN_RET);
             //认证状态码
             boolean isSuccess = response.getData(Keys.SUCCESS)[0] == 1;
             //认证消息
-            String message = new String(response.getData(Keys.MESSAGE), "gb2312");
+            String msg = new String(response.getData(Keys.MESSAGE), "gb2312");
 
-            logger.debug("登录回执:"+ isSuccess +","+ message);
             if (isSuccess) {
                 //初始化session和计数器
                 session = response.getData(Keys.SESSION);
@@ -229,14 +222,12 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
                 breatheTimer = new Timer(true);
                 breatheTimer.schedule(new BreatheTask(), 0, 30000);
                 //设置断开监听器
-                logger.debug("正在启动离线消息监听器");
                 disconnectListener = new DisconnectListener();
                 disconnectListener.setServer(messenger.getServer());
                 disconnectListener.setOnDisconnect(this);
             }
             //登录回调
-            logger.debug("正在回调登录结果");
-            listener.onConnect(isSuccess, message);
+            listener.onConnect(isSuccess, msg);
         } catch (IOException e) {
             throw new SupplicantException("与认证服务器通讯出错", e);
         }
@@ -260,11 +251,10 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
         message.putData(Keys.BLOCK2E, ByteConvert.intArrayToBytes(DEFAULT_BLOCK));
         message.putData(Keys.BLOCK2F, ByteConvert.intArrayToBytes(DEFAULT_BLOCK));
         try {
-            logger.debug("正在发送心跳请求");
-            Message response= messenger.sendAndReceive(message, Actions.BREATHE_RET);
+            messenger.send(message);
+            Message response= messenger.read(Actions.BREATHE_RET);
             boolean isSuccess = response.getData(Keys.SUCCESS)[0] == 1;
 
-            logger.debug("心跳回执:"+ isSuccess);
             if (isSuccess) {
                 //更新session和计数器
                 session = response.getData(Keys.SESSION);
@@ -294,13 +284,11 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
         message.putData(Keys.BLOCK2E, ByteConvert.intArrayToBytes(DEFAULT_BLOCK));
         message.putData(Keys.BLOCK2F, ByteConvert.intArrayToBytes(DEFAULT_BLOCK));
         try {
-            logger.debug("正在发送离线请求");
-            Message response = messenger.sendAndReceive(message, Actions.LOGOUT_RET);
+            messenger.send(message);
+            Message response = messenger.read(Actions.LOGOUT_RET);
             boolean isSuccess = response.getData(Keys.SUCCESS)[0] == 1;
 
-            logger.debug("下线回执:"+ isSuccess);
             if (isSuccess) {
-                logger.debug("正在停止断开监听器");
                 disconnectListener.stop();
             }
         } catch (IOException e) {
@@ -312,8 +300,7 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
      * 释放资源
      */
     public void destroy(){
-        logger.debug("正在释放资源");
-        messenger.destroy();
+        messenger.stop();
     }
 
     @Override

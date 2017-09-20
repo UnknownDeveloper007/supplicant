@@ -1,7 +1,7 @@
 package cn.banto.core;
 
+import cn.banto.exception.SocketClosedException;
 import cn.banto.exception.SupplicantException;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.SocketException;
@@ -10,8 +10,6 @@ import java.net.SocketException;
  * 离线消息监听器
  */
 public class DisconnectListener extends BaseSocket {
-
-    private final Logger logger = Logger.getLogger(DisconnectListener.class);
 
     /**
      * 离线回调接口
@@ -53,8 +51,9 @@ public class DisconnectListener extends BaseSocket {
 
         @Override
         public void run() {
+            DisconnectType type = DisconnectType.UNKNOWN;
             try {
-                Message message = read(new MessageFilter(){
+                Message message = read(new MessageFilter() {
                     @Override
                     public boolean after(Message message) {
                         return message.getAction() == Actions.DISCONNECT;
@@ -62,12 +61,14 @@ public class DisconnectListener extends BaseSocket {
                 });
 
                 int reason = message.getData(Keys.REASON)[0];
-                //触发事件
-                DisconnectType type = DisconnectType.findByCode(reason);
-                logger.debug("正在触发离线回调");
-                onDisconnect.onDisconnect(type);
+                type = DisconnectType.findByCode(reason);
             } catch (IOException e) {
                 e.printStackTrace();
+            } catch (SocketClosedException e){
+                type = DisconnectType.NORMAL;
+            } finally {
+                //触发事件
+                onDisconnect.onDisconnect(type);
             }
         }
     }

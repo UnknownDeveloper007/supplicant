@@ -2,7 +2,6 @@ package cn.banto.core;
 
 import cn.banto.exception.SocketClosedException;
 import cn.banto.utils.CryptTo3848;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -12,11 +11,15 @@ import java.net.SocketException;
 
 public class BaseSocket {
 
-    private final Logger logger = Logger.getLogger(BaseSocket.class);
-
+    /**
+     * 认证服务器地址
+     */
     protected InetAddress server;
-    protected DatagramSocket socket;
 
+    /**
+     * socket对象
+     */
+    protected DatagramSocket socket;
 
     /**
      * 设置通讯服务器地址
@@ -39,7 +42,7 @@ public class BaseSocket {
      */
     public void stop(){
         try {
-            DatagramPacket packet = new DatagramPacket(new byte[1], 1, InetAddress.getByName("127.0.0.1"), socket.getPort());
+            DatagramPacket packet = new DatagramPacket(new byte[1], 1, InetAddress.getByName("127.0.0.1"), socket.getLocalPort());
             socket.send(packet);
         } catch (IOException e) {
             e.printStackTrace();
@@ -48,9 +51,10 @@ public class BaseSocket {
 
     /**
      * 初始化socket
+     * @param port
      * @throws SocketException
      */
-    protected void initSocket(int port) throws SocketException{
+    protected void initSocket(int port) throws SocketException {
         socket = new DatagramSocket(port);
     }
 
@@ -68,15 +72,6 @@ public class BaseSocket {
         //发送消息
         DatagramPacket packet = new DatagramPacket(data, data.length, address, port);
         socket.send(packet);
-    }
-
-    /**
-     * 接收消息
-     * @return
-     * @throws IOException
-     */
-    protected Message read() throws IOException {
-        return read(new MessageFilter());
     }
 
     /**
