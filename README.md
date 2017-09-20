@@ -18,9 +18,8 @@ java -jar supplicant.jar
 ```
 {
     
-    "server":"认证服务器",
     "entry":"认证方式, 如:internet",
-    "network":"网卡名称, 如:Qualcomm Atheros AR946x Wireless Network Adapter",
+    "network":"网卡名称(如需启用nat，请删除此项), 如:Qualcomm Atheros AR946x Wireless Network Adapter",
     "natIp": "路由器IP",
     "natMac": "路由器MAC",
     "username":"账户名",
