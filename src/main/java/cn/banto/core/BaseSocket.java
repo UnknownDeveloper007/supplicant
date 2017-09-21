@@ -50,26 +50,28 @@ public class BaseSocket {
     }
 
     /**
-     * 初始化socket
-     * @param port
-     * @throws SocketException
-     */
-    protected void initSocket(int port) throws SocketException {
-        socket = new DatagramSocket(port);
-    }
-
-    /**
      * 发送消息对象
      * @param message
      * @param address
      * @param port
      * @throws IOException
      */
-    protected void send(Message message, InetAddress address, int port) throws IOException {
+    public void send(Message message, InetAddress address, int port) throws IOException {
         //编码消息
         byte[] buffer = MessageParser.toByte(message);
         byte[] data   = CryptTo3848.encode(buffer);
-        //发送消息
+
+        send(data, address, port);
+    }
+
+    /**
+     * 发送数据
+     * @param data
+     * @param address
+     * @param port
+     * @throws IOException
+     */
+    public void send(byte[] data, InetAddress address, int port) throws IOException {
         DatagramPacket packet = new DatagramPacket(data, data.length, address, port);
         socket.send(packet);
     }
@@ -80,7 +82,7 @@ public class BaseSocket {
      * @return
      * @throws IOException
      */
-    protected Message read(MessageFilter filter) throws IOException {
+    public Message read(MessageFilter filter) throws IOException {
         byte[] buffer = new byte[1024];
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
         socket.receive(packet);
@@ -109,6 +111,15 @@ public class BaseSocket {
         }
 
         return message;
+    }
+
+    /**
+     * 初始化socket
+     * @param port
+     * @throws SocketException
+     */
+    protected void initSocket(int port) throws SocketException {
+        socket = new DatagramSocket(port);
     }
 
     /**
