@@ -86,6 +86,8 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
         this.netWorkInfo = netWorkInfo;
         //初始化信使
         messenger = new Messenger();
+        //初始化
+        init();
         //自动搜搜认证服务器
         try {
             InetAddress server = InetAddress.getByName(search());
@@ -133,6 +135,20 @@ public class Supplicant implements DisconnectListener.OnDisconnect {
      */
     public void setDhcp(boolean dhcp) {
         this.dhcp = dhcp;
+    }
+
+    /**
+     * 初始化
+     */
+    public void init() throws SupplicantException {
+        try {
+            InetAddress address = InetAddress.getByName("1.1.1.8");
+            messenger.send("info sock ini".getBytes(), address, 3850);
+        } catch (UnknownHostException e) {
+            throw new SupplicantException("无法找到1.1.1.8主机", e);
+        } catch (IOException e) {
+            throw new SupplicantException("与主机[1.1.1.8]通讯出错", e);
+        }
     }
 
     /**
