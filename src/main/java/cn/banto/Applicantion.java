@@ -93,6 +93,7 @@ public class Applicantion extends SupplicantListener {
             System.out.print("请输入路由器MAC:");
             config.setNatMac(scanner.nextLine().trim());
 
+            netWorkInfo = new NetWorkInfo();
             netWorkInfo.setIp(config.getNatIp());
             netWorkInfo.setMac(config.getNatMac());
         } else {
